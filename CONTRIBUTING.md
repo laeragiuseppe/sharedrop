@@ -11,6 +11,17 @@ If you're planning something big, open an issue first and describe what you want
 For small fixes like typos, broken links, or obvious bugs, just go ahead and open a pull request directly.
 
 ---
+## 💬 Join the Community
+
+Before you start contributing, feel free to join the **ShareDrop Discord server** for discussions, questions, and coordination.
+
+This is the best place to:
+- ask about issues before working on them
+- discuss implementation ideas
+- get help if you're stuck
+- share progress on your PR
+
+👉 [Join the ShareDrop Discord Server](https://discord.gg/vJxAn2BeXB)
 
 ## Setting up the project
 
