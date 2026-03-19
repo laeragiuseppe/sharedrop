@@ -1,21 +1,19 @@
 package org.nitish.project.sharedrop
 
 import android.os.Environment
+import androidx.compose.ui.input.key.Key.Companion.F
 import java.io.File
 
 actual class FileSaver {
-    actual fun saveFile(
+
+    actual fun moveFile(
         fileName: String,
-        bytes: ByteArray,
+        sourcePath: String,
         onResult: (success: Boolean, filePath: String) -> Unit
     ) {
-        val context = AndroidContext.appContext
-        if (context == null) {
-            onResult(false, "")
-            return
-        }
-
         runCatching {
+            val sourceFile = File(sourcePath)
+
             val downloadsDir =
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             if (!downloadsDir.exists()) {
@@ -23,12 +21,16 @@ actual class FileSaver {
             }
 
             val outputFile = File(downloadsDir, fileName)
-            outputFile.writeBytes(bytes)
-            outputFile.absolutePath
-        }.onSuccess { filePath ->
-            onResult(true, filePath)
+            sourceFile.copyTo(
+                target = outputFile,
+                overwrite = true
+            ).also {
+                sourceFile.delete()
+            }
         }.onFailure {
             onResult(false, "")
+        }.onSuccess {
+            onResult(true, it.absolutePath)
         }
     }
 }

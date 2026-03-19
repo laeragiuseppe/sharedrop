@@ -144,119 +144,90 @@ fun HomeScreen() {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("ShareDrop") }
-            )
-        },
-        bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (statusMessage.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = statusMessage,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f)
-                        )
-
-                        if (transferProgress > 0f && transferProgress < 1f) {
-                            Text(
-                                text = "${(transferProgress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("ShareDrop") })
+    }, bottomBar = {
+        Column(
+            modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (statusMessage.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = statusMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.weight(1f)
+                    )
 
                     if (transferProgress > 0f && transferProgress < 1f) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        LinearProgressIndicator(
-                            progress = { transferProgress },
-                            modifier = Modifier.fillMaxWidth()
+                        Text(
+                            text = "${(transferProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
-                val filePicker = remember { FilePicker() }
 
-                Button(
-                    onClick = {
-                        val device = selectedDevice
-                        if (device == null) {
-                            statusMessage = "Please select a device first!"
-                        } else {
-                            filePicker.pickFile { fileName, bytes ->
-                                statusMessage = "Sending $fileName..."
-                                transferProgress = 0.01f
+                if (transferProgress > 0f && transferProgress < 1f) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LinearProgressIndicator(
+                        progress = { transferProgress }, modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            val filePicker = remember { FilePicker() }
 
-                                FileSender().sendFile(
-                                    host = device.host,
-                                    port = device.port,
-                                    fileName = fileName,
-                                    bytes = bytes,
-                                    onProgress = { progress ->
-                                        scope.launch(Dispatchers.Main) {
-                                            transferProgress = progress
-                                        }
-                                    },
-                                    onResult = { success ->
-                                        scope.launch(Dispatchers.Main) {
-                                            statusMessage = if (success) "Sent $fileName!" else "Failed!"
-                                            transferProgress = 0f
-                                        }
+            Button(
+                onClick = {
+                    val device = selectedDevice
+                    if (device == null) {
+                        statusMessage = "Please select a device first!"
+                    } else {
+                        filePicker.pickFile { absolutePath ->
+                            statusMessage = "Sending '${absolutePath.pathToFileName()}'..."
+                            transferProgress = 0.01f
+
+                            FileSender().sendFile(
+                                host = device.host,
+                                port = device.port,
+                                absolutePath = absolutePath,
+                                onProgress = { progress ->
+                                    scope.launch(Dispatchers.Main) {
+                                        transferProgress = progress
                                     }
-                                )
-                            }
+                                },
+                                onResult = { success ->
+                                    scope.launch(Dispatchers.Main) {
+                                        statusMessage =
+                                            if (success) "Sent '${absolutePath.pathToFileName()}'!" else "Failed!"
+                                        transferProgress = 0f
+                                    }
+                                })
                         }
                     }
-                ){
-                    Text(if (selectedDevice == null) "Select a device to send" else "Send File to ${selectedDevice!!.name}")
-                }
+                }) {
+                Text(if (selectedDevice == null) "Select a device to send" else "Send File to ${selectedDevice!!.name}")
             }
         }
-    ) { innerPadding ->
+    }) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)
         ) {
             Text(
-                text = buildAnnotatedString {
-                    append("Your Device: ")
-                    withStyle(
-                        MaterialTheme.typography.bodyMedium.toSpanStyle()
-                            .copy(fontWeight = FontWeight.SemiBold)
-                    ) {
-                        append(localDeviceName ?: "Loading...")
-                    }
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(modifier = Modifier.fillMaxWidth())
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Nearby Devices",
-                style = MaterialTheme.typography.titleMedium
+                text = "Nearby Devices", style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             if (nearbyDevices.isEmpty()) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "Searching for devices...",
@@ -268,23 +239,16 @@ fun HomeScreen() {
                 LazyColumn {
                     items(nearbyDevices) { device ->
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                                .clickable {
-                                    selectedDevice = if (selectedDevice == device) null else device
-                                },
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (selectedDevice == device)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable {
+                                selectedDevice = if (selectedDevice == device) null else device
+                            }, colors = CardDefaults.cardColors(
+                                containerColor = if (selectedDevice == device) MaterialTheme.colorScheme.primaryContainer
+                                else MaterialTheme.colorScheme.surfaceVariant
                             )
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Text(
-                                    text = device.name,
-                                    style = MaterialTheme.typography.bodyLarge
+                                    text = device.name, style = MaterialTheme.typography.bodyLarge
                                 )
                                 Text(
                                     text = "${device.host}:${device.port}",
@@ -297,22 +261,25 @@ fun HomeScreen() {
                 }
             }
 
-            if (receivedFiles.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Received Files",
-                        style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyColumn {
-                    items(receivedFiles) { fileName ->
-                        Text(
-                            text = "📄 $fileName",
-                                modifier = Modifier.padding(vertical = 4.dp)
-                        )
+                if (receivedFiles.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Received Files", style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyColumn {
+                        items(receivedFiles) { fileName ->
+                            Text(
+                                text = "📄 $fileName", modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+private fun String.pathToFileName(): String {
+    return replace("\\", "/").substringAfterLast('/')
 }
