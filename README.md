@@ -177,11 +177,16 @@ To contribute:
 
 For bigger changes, open an issue first so we can discuss before you spend time on it.
 
----
+## 💬 Community
 
-## Inspiration
+Join the **ShareDrop Discord server** for:
+- contributor discussions
+- bug reports
+- feature ideas
+- PR reviews
+- testing updates
 
-Built with inspiration from [LocalSend](https://github.com/localsend/localsend), which does something similar and does it really well. ShareDrop is a from-scratch Kotlin Multiplatform take on the same idea.
+👉 [Join the ShareDrop Discord Server](https://discord.gg/vJxAn2BeXB)
 
 ---
 
